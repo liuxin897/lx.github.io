@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>店铺运营财务模型 </title>
+    <title>店铺运营财务模型 V1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background-color: #f8fafc; height: 100vh; overflow: hidden; }
@@ -17,9 +17,9 @@
         
         .section-header { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; margin-bottom: 1rem; margin-top: 1.5rem; }
         
-        /* 核心卡片 - 突出ROI */
+        /* 核心卡片 */
         .stat-card { background: white; border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; position: relative; }
-        .card-select { position: absolute; top: 1rem; right: 1rem; font-size: 0.75rem; color: #94a3b8; border: none; background: transparent; cursor: pointer; text-align: right; }
+        .card-select { position: absolute; top: 1rem; right: 1rem; font-size: 0.75rem; color: #94a3b8; border: none; background: transparent; cursor: pointer; text-align: right; max-width: 100px; }
         
         /* 表格优化 */
         .finance-table { width: 100%; font-size: 0.85rem; border-collapse: separate; border-spacing: 0; }
@@ -34,81 +34,95 @@
         .highlight-roi { color: #ea580c; font-weight: 800; font-size: 1.5rem; }
         .safe-roi { color: #16a34a; }
         .danger-roi { color: #dc2626; }
+
+        /* 打赏模态框动画 */
+        #donateModal { transition: opacity 0.3s ease-in-out; }
+        #donateModal.hidden { display: none; opacity: 0; }
+        #donateModal:not(.hidden) { display: flex; opacity: 1; }
     </style>
 </head>
 <body class="flex">
 
-    <!-- 左侧参数 (1/5) -->
+    <!-- 左侧参数 -->
     <div class="sidebar w-1/5 p-5 flex flex-col">
-        <h2 class="text-xl font-bold text-slate-800 mb-2">淘宝运营模型 <span class="text-orange-500 text-sm">V4.0</span></h2>
-        <p class="text-xs text-slate-400 mb-4">含运费毛利 · 付费ROI专算</p>
+        <div>
+            <h2 class="text-xl font-bold text-slate-800 mb-2">淘宝运营模型 <span class="text-orange-500 text-sm">V4.1</span></h2>
+            <p class="text-xs text-slate-400 mb-4">含运费毛利 · 推广盈亏线修正版</p>
 
-        <!-- 1. 目标设定 -->
-        <div class="section-header">1. 利润目标</div>
-        <div class="input-group">
-            <label>目标净利润</label>
-            <input type="number" id="targetProfit" value="300000" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label>目标净利率 (%)</label>
-            <input type="number" id="targetProfitRate" value="8.5" oninput="calculate()">
-        </div>
+            <!-- 1. 目标设定 -->
+            <div class="section-header">1. 利润目标</div>
+            <div class="input-group">
+                <label>目标净利润</label>
+                <input type="number" id="targetProfit" value="300000" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>目标净利率 (%)</label>
+                <input type="number" id="targetProfitRate" value="8.5" oninput="calculate()">
+            </div>
 
-        <!-- 2. 商品模型 -->
-        <div class="section-header">2. 商品与履约</div>
-        <div class="input-group  p-2 rounded border ">
-            <label class="text-orange-800">实际毛利率 (%)</label>
-            <input type="number" id="grossMargin" value="50" oninput="calculate()" class="bg-white border-orange-200">
-            <div class="text-[10px] text-slate-400 mt-1">
-                *注意：请填写扣除运费后的毛利<br>
-                (销售价 - 进货价 - 快递费)/销售价
+            <!-- 2. 商品模型 -->
+            <div class="section-header">2. 商品与履约</div>
+            <div class="input-group p-2 rounded border ">
+                <label>实际毛利率 (%)</label>
+                <input type="number" id="grossMargin" value="50" oninput="calculate()" class="bg-white ">
+                <div class="text-[10px] text-slate-400 mt-1">
+                    *注意：请填写扣除运费后的毛利<br>
+                    (销售价 - 进货价 - 快递费)/销售价
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <div class="input-group w-1/2">
+                    <label>快递+打包 (元/单)</label>
+                    <input type="number" id="fulfillmentFee" value="2.4" oninput="calculate()">
+                    <div class="text-[10px] text-slate-400 mt-1">*用于倒推货品进价</div>
+                </div>
+                <div class="input-group w-1/2">
+                    <label>客单价 (AOV)</label>
+                    <input type="number" id="aov" value="65" oninput="calculate()">
+                </div>
+            </div>
+
+            <!-- 3. 流量结构 -->
+            <div class="section-header">3. 流量与推广</div>
+            <div class="input-group">
+                <label>免费流量占比 (%)</label>
+                <input type="number" id="freeTrafficRate" value="30" oninput="calculate()">
+                <div class="text-[10px] text-slate-400 mt-1">剩余即为付费流量</div>
+            </div>
+            <div class="input-group">
+                <label>转化率 (%)</label>
+                <input type="number" id="cvr" value="6.0" step="0.1" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>退货率 (%)</label>
+                <input type="number" id="returnRate" value="20" oninput="calculate()">
+            </div>
+
+            <!-- 4. 固定支出 -->
+            <div class="section-header">4. 其它成本</div>
+            <div class="input-group">
+                <label>年度管理费</label>
+                <input type="number" id="adminFee" value="190000" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>损耗占比 (% of GMV)</label>
+                <input type="number" id="wastageRate" value="2" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label class="text-blue-600">税率 (基于净GMV)</label>
+                <input type="text" value="固定 6.5%" readonly class="bg-blue-50 text-blue-600 font-bold border-blue-100 cursor-not-allowed">
             </div>
         </div>
-        <div class="flex gap-2">
-            <div class="input-group w-1/2">
-                <label>快递+打包 (元/单)</label>
-                <input type="number" id="fulfillmentFee" value="2.4" oninput="calculate()">
-                <div class="text-[10px] text-slate-400 mt-1">*用于倒推货品进价</div>
-            </div>
-            <div class="input-group w-1/2">
-                <label>客单价 (AOV)</label>
-                <input type="number" id="aov" value="65" oninput="calculate()">
-            </div>
-        </div>
 
-        <!-- 3. 流量结构 -->
-        <div class="section-header">3. 流量与推广</div>
-        <div class="input-group">
-            <label>免费流量占比 (%)</label>
-            <input type="number" id="freeTrafficRate" value="30" oninput="calculate()">
-            <div class="text-[10px] text-slate-400 mt-1">剩余即为付费流量</div>
-        </div>
-        <div class="input-group">
-            <label>转化率 (%)</label>
-            <input type="number" id="cvr" value="6.0" step="0.1" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label>退货率 (%)</label>
-            <input type="number" id="returnRate" value="20" oninput="calculate()">
-        </div>
-
-        <!-- 4. 固定支出 -->
-        <div class="section-header">4. 其它成本</div>
-        <div class="input-group">
-            <label>年度管理费</label>
-            <input type="number" id="adminFee" value="190000" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label>损耗占比 (% of GMV)</label>
-            <input type="number" id="wastageRate" value="2" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label class="text-blue-600">税率 (基于净GMV)</label>
-            <input type="text" value="固定 6.5%" readonly class="bg-blue-50 text-blue-600 font-bold border-blue-100 cursor-not-allowed">
+        <!-- 打赏按钮 -->
+        <div class="mt-auto pt-6 border-t border-slate-100">
+            <button onclick="openDonateModal()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
+                <span>❤</span> 打赏作者
+            </button>
         </div>
     </div>
 
-    <!-- 右侧内容 (4/5) -->
+    <!-- 右侧内容 -->
     <div class="main-content w-4/5 p-8 bg-slate-50">
         
         <!-- 核心卡片 -->
@@ -147,23 +161,83 @@
         </div>
     </div>
 
+    <!-- 打赏模态框 (修改版) -->
+    <div id="donateModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden transform transition-all scale-100">
+            <!-- 头部 -->
+            <div class="bg-gradient-to-r from-rose-500 to-orange-500 p-6 text-white text-center">
+                <h3 class="text-xl font-bold mb-1">感谢您的支持</h3>
+                <p class="text-white/90 text-sm">如果这个模型对您有帮助，请作者喝杯咖啡吧 ☕</p>
+                <button onclick="closeDonateModal()" class="absolute top-4 right-4 text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            
+            <!-- 内容：双收款码 -->
+            <div class="p-8 flex flex-col items-center">
+                <div class="flex justify-center gap-6 mb-6 w-full">
+                    <!-- 微信 -->
+                    <div class="flex flex-col items-center w-1/2">
+                        <div class="bg-white p-2 border border-slate-200 rounded-xl mb-2 w-full aspect-square flex items-center justify-center overflow-hidden">
+                            <img src="./wx.jpg" alt="微信支付" class="w-full h-full object-contain">
+                        </div>
+                        <div class="flex items-center gap-1 text-slate-600 font-medium text-sm">
+                            <span class="text-green-600">●</span> 微信支付
+                        </div>
+                    </div>
+                    <!-- 支付宝 -->
+                    <div class="flex flex-col items-center w-1/2">
+                        <div class="bg-white p-2 border border-slate-200 rounded-xl mb-2 w-full aspect-square flex items-center justify-center overflow-hidden">
+                            <img src="./zfb.jpg" alt="支付宝" class="w-full h-full object-contain">
+                        </div>
+                        <div class="flex items-center gap-1 text-slate-600 font-medium text-sm">
+                            <span class="text-blue-500">●</span> 支付宝
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="closeDonateModal()" class="w-full py-2.5 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+                    关闭窗口
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 定义下拉选项
         const metricOptions = [
             { key: 'targetPaidRoi', label: '目标付费 ROI (后台设置)' },
-            { key: 'breakEvenPaidRoi', label: '保本付费 ROI (生死线)' },
+            { key: 'marginalRoi', label: '推广保本 ROI (盈亏线)' }, // 新增
+            { key: 'storeBreakEvenRoi', label: '全店保本 ROI (含房租)' }, // 原来的保本
             { key: 'ppc', label: '建议 PPC 出价' },
             { key: 'marketingBudget', label: '年度推广预算' },
             { key: 'dailyGmv', label: '每日 GMV' },
             { key: 'annualOrders', label: '年度发货单量' }
         ];
 
-        let cardConfig = ['targetPaidRoi', 'breakEvenPaidRoi', 'ppc', 'marketingBudget'];
+        // 默认卡片配置：加入了 推广保本 ROI
+        let cardConfig = ['targetPaidRoi', 'marginalRoi', 'ppc', 'marketingBudget'];
         let results = {};
 
         function init() {
             renderCards();
             calculate();
+            
+            // 自动弹出打赏页面 (2秒后)
+            setTimeout(() => {
+                openDonateModal();
+            }, 2000);
         }
+        
+        function openDonateModal() {
+            document.getElementById('donateModal').classList.remove('hidden');
+        }
+
+        function closeDonateModal() {
+            document.getElementById('donateModal').classList.add('hidden');
+        }
+        
+        document.getElementById('donateModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDonateModal();
+        });
 
         const fmtMoney = (n) => '¥' + n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         const fmtPct = (n) => n.toFixed(2) + '%';
@@ -172,66 +246,61 @@
             // 1. 获取输入
             const targetNetProfit = parseFloat(document.getElementById('targetProfit').value) || 0;
             const targetNetRate = parseFloat(document.getElementById('targetProfitRate').value) / 100 || 0.15;
-            
-            const grossMargin = parseFloat(document.getElementById('grossMargin').value) / 100 || 0; // 含运费毛利
+            const grossMargin = parseFloat(document.getElementById('grossMargin').value) / 100 || 0; 
             const fulfillmentFee = parseFloat(document.getElementById('fulfillmentFee').value) || 0;
-            
             const freeTrafficRate = parseFloat(document.getElementById('freeTrafficRate').value) / 100 || 0;
             const aov = parseFloat(document.getElementById('aov').value) || 0;
             const cvr = parseFloat(document.getElementById('cvr').value) / 100 || 0;
             const returnRate = parseFloat(document.getElementById('returnRate').value) / 100 || 0;
-            
             const adminFee = parseFloat(document.getElementById('adminFee').value) || 0;
             const wastageRate = parseFloat(document.getElementById('wastageRate').value) / 100 || 0;
+            const taxRate = 0.065;
 
             // 2. 基础倒推
-            // GMV = 目标利润 / 目标净利率
             const annualGmv = targetNetRate > 0 ? targetNetProfit / targetNetRate : 0;
             const annualOrders = aov > 0 ? annualGmv / aov : 0;
-            
-            // 净GMV与退货
             const annualReturnVal = annualGmv * returnRate;
             const annualNetGmv = annualGmv - annualReturnVal;
 
-            // 3. 核心利润逻辑 (基于含运费毛利)
-            // 毛利润 = 净GMV * 毛利率
+            // 3. 成本结构
             const annualGrossProfit = annualNetGmv * grossMargin;
-
-            // 倒推成本结构
-            // 总变动成本(货+运) = 净GMV - 毛利润 = 净GMV * (1 - 毛利率)
             const annualTotalVariableCost = annualNetGmv * (1 - grossMargin);
-            
-            // 计算运费总额 (基于发货单量，不论退货)
             const annualFulfillmentCost = annualOrders * fulfillmentFee;
-            
-            // 倒推货品成本 (衣服进货价) = 总变动成本 - 运费
-            // 注意：如果运费太高，可能导致算出来的货品成本为负，说明毛利填错了
             const annualProductCost = annualTotalVariableCost - annualFulfillmentCost;
 
             // 4. 费用计算
-            const annualTax = annualNetGmv * 0.065;
-            const annualWastage = annualGmv * wastageRate;
+            const annualTax = annualNetGmv * taxRate;
+            const annualWastage = annualGmv * wastageRate; // 损耗通常按总GMV估算，或者按Net看用户定义，此处按代码原逻辑基于GMV
 
-            // 5. 推广费倒推 (The Plug)
-            // 推广费 = 毛利润 - 税 - 损耗 - 管理费 - 目标净利
+            // 5. 推广费倒推 (资金池)
             const annualMarketing = annualGrossProfit - annualTax - annualWastage - adminFee - targetNetProfit;
 
-            // 6. ROI 与 流量计算
+            // 6. ROI 计算
             const paidTrafficRate = 1 - freeTrafficRate;
-            
-            // 付费GMV预估 (用于计算后台ROI)
-            // 假设付费流量带来的转化与自然流量一致
             const paidGmv = annualGmv * paidTrafficRate;
 
-            // A. 目标付费 ROI
+            // A. 目标付费 ROI (Budget / Spend)
             const targetPaidRoi = annualMarketing > 0 ? paidGmv / annualMarketing : 0;
 
-            // B. 保本付费 ROI (Break-even Paid ROI)
-            // 当净利=0时，推广费上限 = 现在的推广费 + 现在的目标净利
-            const breakEvenMarketing = annualMarketing + targetNetProfit;
-            const breakEvenPaidRoi = breakEvenMarketing > 0 ? paidGmv / breakEvenMarketing : 999;
+            // B. 全店保本 ROI (Store Survival ROI)
+            // 逻辑：如果净利不要求，全用来投放，能承受的ROI
+            const maxMarketingNoProfit = annualMarketing + targetNetProfit;
+            const storeBreakEvenRoi = maxMarketingNoProfit > 0 ? paidGmv / maxMarketingNoProfit : 999;
 
-            // C. PPC 计算
+            // C. 推广保本 ROI (Marginal Break-even ROI) - 新增修正逻辑
+            // 逻辑：投1块钱广告，带来的毛利要能覆盖这1块钱成本
+            // 公式：BreakEvenROI = 1 / (单单实际毛利%)
+            // 考虑到退货影响：
+            // 1元广告 -> 带来 ROI 元GMV -> 实际成交 ROI*(1-退货率)
+            // 实际毛利额 = ROI*(1-退货率) * grossMargin
+            // 变动费用(税) = ROI*(1-退货率) * taxRate
+            // 损耗 = ROI * wastageRate (损耗通常基于下单金额或发货)
+            // 平衡点：1 = ROI * [ (1-Return)*Margin - (1-Return)*Tax - Wastage ]
+            
+            const effectiveMarginPerSale = (1 - returnRate) * (grossMargin - taxRate) - wastageRate;
+            const marginalRoi = effectiveMarginPerSale > 0 ? 1 / effectiveMarginPerSale : 999;
+
+            // D. PPC
             const totalVisitors = cvr > 0 ? annualOrders / cvr : 0;
             const paidVisitors = totalVisitors * paidTrafficRate;
             const ppc = (paidVisitors > 0 && annualMarketing > 0) ? annualMarketing / paidVisitors : 0;
@@ -239,7 +308,8 @@
             // 7. 存储结果
             results = {
                 targetPaidRoi: targetPaidRoi,
-                breakEvenPaidRoi: breakEvenPaidRoi,
+                storeBreakEvenRoi: storeBreakEvenRoi,
+                marginalRoi: marginalRoi, // 新字段
                 ppc: ppc,
                 marketingBudget: annualMarketing,
                 dailyGmv: annualGmv / 360,
@@ -248,27 +318,19 @@
 
             updateCardsData();
 
-            // 8. 表格数据构建
+            // 8. 表格渲染
             const tableData = [
                 { name: 'GMV (销售额)', val: annualGmv, isBold: true },
                 { name: '(-) 退货', val: annualReturnVal, color: 'text-red-500' },
                 { name: '= 净销售额 (Net Sales)', val: annualNetGmv, bg: 'bg-blue-50', isBold: true },
-                
-                // 变动成本区块
                 { name: '(-) 货品与履约总成本', val: annualTotalVariableCost, color: 'text-slate-500', note: 'Net GMV × (1-毛利率)' },
                 { name: '其中：快递打包费', val: annualFulfillmentCost, isSubRow: true, note: '单量 × ' + fulfillmentFee },
                 { name: '其中：货品进货成本', val: annualProductCost, isSubRow: true, color: annualProductCost < 0 ? 'text-red-600 font-bold' : '', note: annualProductCost < 0 ? '警告:运费过高侵蚀毛利' : '倒推值' },
-
-                // 毛利
                 { name: '= 贡献毛利 (Gross Profit)', val: annualGrossProfit, bg: 'bg-orange-50', color: 'text-orange-800', isBold: true },
-                
-                // 费用
                 { name: '(-) 推广费 (倒推预算)', val: annualMarketing, color: 'text-orange-600', isBold: true, note: '剩余资金池' },
                 { name: '(-) 税费', val: annualTax, color: 'text-slate-400', note: 'Net GMV × 6.5%' },
                 { name: '(-) 损耗', val: annualWastage, color: 'text-slate-400' },
                 { name: '(-) 管理费', val: adminFee, color: 'text-slate-400' },
-
-                // 净利
                 { name: '= 净利润', val: targetNetProfit, color: 'text-green-600', bg: 'bg-green-50', isBold: true, isTotal: true }
             ];
 
@@ -279,14 +341,15 @@
             const container = document.getElementById('cardContainer');
             container.innerHTML = '';
             cardConfig.forEach((key, index) => {
+                const opt = metricOptions.find(o => o.key === key);
                 const div = document.createElement('div');
                 div.className = 'stat-card';
                 div.innerHTML = `
                     <select class="card-select" onchange="changeCard(${index}, this.value)">
-                        ${metricOptions.map(opt => `<option value="${opt.key}" ${opt.key === key ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                        ${metricOptions.map(o => `<option value="${o.key}" ${o.key === key ? 'selected' : ''}>${o.label}</option>`).join('')}
                     </select>
                     <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 mb-2" id="card-label-${index}">
-                        ${metricOptions.find(o => o.key === key).label}
+                        ${opt ? opt.label : ''}
                     </div>
                     <div class="truncate" id="card-val-${index}">-</div>
                     <div class="text-xs text-slate-400 mt-2 font-medium" id="card-sub-${index}">...</div>
@@ -299,8 +362,10 @@
             cardConfig.forEach((key, index) => {
                 const valEl = document.getElementById(`card-val-${index}`);
                 const subEl = document.getElementById(`card-sub-${index}`);
-                const label = metricOptions.find(o => o.key === key).label;
-                document.getElementById(`card-label-${index}`).innerText = label;
+                const labelEl = document.getElementById(`card-label-${index}`);
+                
+                const opt = metricOptions.find(o => o.key === key);
+                if(labelEl) labelEl.innerText = opt.label;
 
                 let displayVal = '0';
                 let subText = '';
@@ -308,33 +373,35 @@
 
                 if (key === 'targetPaidRoi') {
                     displayVal = results.targetPaidRoi.toFixed(2);
-                    subText = `基于 ${(100 - parseFloat(document.getElementById('freeTrafficRate').value))}% 付费流量`;
+                    subText = `含 ${(100 - parseFloat(document.getElementById('freeTrafficRate').value))}% 付费流量`;
                     
-                    if (results.targetPaidRoi > 4.5) {
-                        valClass = 'highlight-roi danger-roi'; // 太难了
-                        subText = '目标过高，很难达成';
-                    } else if (results.targetPaidRoi < results.breakEvenPaidRoi) {
+                    if (results.targetPaidRoi > 8) {
+                        valClass = 'highlight-roi danger-roi'; 
+                        subText = '目标极高，极难达成';
+                    } else if (results.targetPaidRoi < results.marginalRoi) {
                         valClass = 'highlight-roi danger-roi';
-                        subText = '亏损状态';
+                        subText = '亏损推广 (低于盈亏线)';
                     } else {
                         valClass = 'highlight-roi safe-roi';
                     }
-                } else if (key === 'breakEvenPaidRoi') {
-                    displayVal = results.breakEvenPaidRoi.toFixed(2);
-                    valClass = 'text-2xl font-bold text-orange-500';
-                    subText = '低于此值即亏损';
+                } else if (key === 'marginalRoi') {
+                    // 新增指标
+                    displayVal = results.marginalRoi.toFixed(2);
+                    valClass = 'text-2xl font-bold text-purple-600';
+                    subText = '广告投放生死线 (1/实际毛利)';
+                } else if (key === 'storeBreakEvenRoi') {
+                    // 旧指标
+                    displayVal = results.storeBreakEvenRoi.toFixed(2);
+                    valClass = 'text-2xl font-bold text-slate-500';
+                    subText = '全店不亏钱的底线';
                 } else if (key === 'ppc') {
                     displayVal = '¥' + results.ppc.toFixed(2);
                     if(results.ppc < 0.5) valClass = 'text-2xl font-bold text-red-500';
-                    subText = 'PPC上限';
+                    subText = '承受上限';
                 } else if (key === 'marketingBudget') {
                     displayVal = fmtMoney(results.marketingBudget);
-                    if(results.marketingBudget < 0) {
-                        valClass = 'text-2xl font-bold text-red-500';
-                        subText = '毛利不足以覆盖支出';
-                    } else {
-                        valClass = 'text-2xl font-bold text-blue-600';
-                    }
+                    valClass = results.marketingBudget < 0 ? 'text-2xl font-bold text-red-500' : 'text-2xl font-bold text-blue-600';
+                    subText = results.marketingBudget < 0 ? '毛利不足以覆盖支出' : '年度预算池';
                 } else if (key === 'dailyGmv') {
                     displayVal = fmtMoney(results.dailyGmv);
                     subText = '目标日销';
@@ -343,9 +410,11 @@
                     subText = '单';
                 }
 
-                valEl.className = valClass;
-                valEl.innerText = displayVal;
-                subEl.innerText = subText;
+                if(valEl) {
+                    valEl.className = valClass;
+                    valEl.innerText = displayVal;
+                }
+                if(subEl) subEl.innerText = subText;
             });
         }
 
@@ -367,7 +436,6 @@
                 const annual = row.val;
                 let ratio = totalGmv > 0 ? (row.val / totalGmv * 100) : 0;
                 
-                // 子行不显示日/月，仅显示年度和备注，保持界面清爽
                 const dDaily = row.isSubRow ? '' : fmtMoney(daily);
                 const dMonthly = row.isSubRow ? '' : fmtMoney(monthly);
                 const dAnnual = fmtMoney(annual);
@@ -395,5 +463,3 @@
     </script>
 </body>
 </html>
-
-
